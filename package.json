@@ -1,0 +1,40 @@
+{
+  "name": "score-board-server",
+  "version": "1.0.0",
+  "description": "A backend server for score-board",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "google-auth-library": "^1.2.1",
+    "googleapis": "^25.0.0",
+    "lodash": "^4.17.4",
+    "q": "^1.5.1",
+    "score-board-ui": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.16.8",
+    "@types/express": "^4.0.37",
+    "@types/gapi": "0.0.35",
+    "@types/lodash": "^4.14.86",
+    "@types/q": "^1.0.7",
+    "awesome-typescript-loader": "^3.2.1",
+    "source-map-loader": "^0.2.1",
+    "tslint": "^5.9.1",
+    "typescript": "^2.4.1",
+    "webpack": "^3.9.1",
+    "webpack-dev-server": "^2.9.7",
+    "webpack-node-externals": "^1.6.0",
+    "webpack-watch-server": "^1.2.1"
+  },
+  "main": "build/index.js",
+  "bin": {
+    "score-board-server": "bin/score-board-server.js"
+  },
+  "scripts": {
+    "build": "webpack",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "dev": "webpack-watch-server"
+  },
+  "author": "",
+  "license": "ISC"
+}

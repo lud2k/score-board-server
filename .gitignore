@@ -1,0 +1,4 @@
+node_modules
+secrets.json
+config.json
+score-board-server.iml
