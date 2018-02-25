@@ -1,6 +1,5 @@
 
 import * as fs from 'fs'
-import {jdenticon} from 'jdenticon'
 
 export type DatabaseType = 'google-sheets'
 
