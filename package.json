@@ -1,6 +1,6 @@
 {
   "name": "score-board-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A backend server for score-board",
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -9,7 +9,7 @@
     "googleapis": "^25.0.0",
     "lodash": "^4.17.4",
     "q": "^1.5.1",
-    "score-board-ui": "^1.0.3"
+    "score-board-ui": "^1.0.4"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.8",
