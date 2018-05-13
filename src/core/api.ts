@@ -12,8 +12,13 @@ export interface AddScore {
 
 export interface AddPlayer {
   name: string
+  teamId: Id
 }
 
 export interface AddGame {
+  name: string
+}
+
+export interface AddTeam {
   name: string
 }

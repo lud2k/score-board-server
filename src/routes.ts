@@ -1,6 +1,9 @@
 
 import {HTML} from './template'
-import {addPlayer, addScore, getGames, getPlayers, getScores, getDataUrl} from './database/database'
+import {
+  addPlayer, addScore, getGames, getPlayers, getScores, getDataUrl,
+  getTeams
+} from './database/database'
 import {ApiError} from './core/error'
 import {getScoreBoardUiScript} from './core/score-board-ui'
 import {validateAddPlayerBody, validateAddScoreBody} from './core/validation'
@@ -59,7 +62,8 @@ export const setupRoutes = (app: Application, config: Config) => {
       const scores = await getScores(config)
       const players = await getPlayers(config)
       const games = await getGames(config)
-      res.send({ scores, players, games })
+      const teams = await getTeams(config)
+      res.send({ scores, players, games, teams })
     })
   })
 
@@ -81,6 +85,12 @@ export const setupRoutes = (app: Application, config: Config) => {
   app.get('/players', async (req, res) => {
     await safeRoute(req, res, async () => {
       res.send(await getPlayers(config))
+    })
+  })
+
+  app.get('/teams', async (req, res) => {
+    await safeRoute(req, res, async () => {
+      res.send(await getTeams(config))
     })
   })
 

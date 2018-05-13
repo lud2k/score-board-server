@@ -2,7 +2,7 @@
 import * as fs from 'fs'
 import {auth} from 'google-auth-library'
 import {AddPlayer, AddScore} from '../../core/api'
-import {Game, Player, Score} from '../../core/model'
+import {Game, Player, Score, Team} from '../../core/model'
 import {Config} from '../../core/config'
 import * as q from 'q'
 import * as _ from 'lodash'
@@ -102,6 +102,12 @@ export const addPlayer = async (config: Config, player: AddPlayer): Promise<Play
     throw new ApiError({code: 'VALIDATION', field: 'name', message: 'Player already exists'})
   }
 
+  const teams = await getTeams(config)
+  const team = _.find(teams, { id: player.teamId })
+  if (!team) {
+    throw new ApiError({code: 'VALIDATION', field: 'teamId', message: 'Team does not exist'})
+  }
+
   // add new player
   const response: any = await q.nfcall(sheets.spreadsheets.values.append, {
     auth: client,
@@ -111,7 +117,7 @@ export const addPlayer = async (config: Config, player: AddPlayer): Promise<Play
     insertDataOption: 'INSERT_ROWS',
     resource: {
       values: [
-        [player.name],
+        [player.name, team.name],
       ],
     },
   })
@@ -119,6 +125,7 @@ export const addPlayer = async (config: Config, player: AddPlayer): Promise<Play
   return {
     id: /!A(\d+)/.exec(response.data.updates.updatedRange)[1],
     name: player.name,
+    teamId: team.id
   } as Player
 }
 
@@ -128,12 +135,15 @@ export const getPlayers = async (config: Config): Promise<Player[]> => {
   const response = await q.nfcall(sheets.spreadsheets.values.get, {
     auth: client,
     spreadsheetId: config.database.spreadsheetId,
-    range: `Players!A1:F100000`,
+    range: `Players!A1:B100000`,
   }) as any
+
+  const teams = _.keyBy(await getTeams(config), 'name')
 
   return response.data.values.slice(1).map((row: string[], i: number) => ({
     id: i.toString(),
     name: row[0],
+    teamId: teams[row[1]] ? teams[row[1]].id : null,
   } as Player))
 }
 
@@ -150,6 +160,21 @@ export const getGames = async (config: Config): Promise<Game[]> => {
     id: i.toString(),
     name: row[0],
   } as Game))
+}
+
+export const getTeams = async (config: Config): Promise<Team[]> => {
+  const client = await getGAPIClient()
+  const sheets = google.sheets('v4')
+  const response = await q.nfcall(sheets.spreadsheets.values.get, {
+    auth: client,
+    spreadsheetId: config.database.spreadsheetId,
+    range: `Teams!A1:B100000`,
+  }) as any
+
+  return response.data.values.slice(1).map((row: string[], i: number) => ({
+    id: i.toString(),
+    name: row[0],
+  } as Team))
 }
 
 const getGAPIClient = async () => {

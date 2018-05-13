@@ -145,6 +145,13 @@ exports.getGames = (config) => __awaiter(this, void 0, void 0, function* () {
     }
     throw new Error(`Unknow database type: ${type}`);
 });
+exports.getTeams = (config) => __awaiter(this, void 0, void 0, function* () {
+    const type = config.database.type;
+    if (type === 'google-sheets') {
+        return GoogleSheets.getTeams(config);
+    }
+    throw new Error(`Unknow database type: ${type}`);
+});
 exports.addPlayer = (config, player) => __awaiter(this, void 0, void 0, function* () {
     const type = config.database.type;
     if (type === 'google-sheets') {
@@ -333,7 +340,8 @@ exports.setupRoutes = (app, config) => {
             const scores = yield database_1.getScores(config);
             const players = yield database_1.getPlayers(config);
             const games = yield database_1.getGames(config);
-            res.send({ scores, players, games });
+            const teams = yield database_1.getTeams(config);
+            res.send({ scores, players, games, teams });
         }));
     }));
     app.get('/scores', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -352,6 +360,11 @@ exports.setupRoutes = (app, config) => {
     app.get('/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
         yield exports.safeRoute(req, res, () => __awaiter(this, void 0, void 0, function* () {
             res.send(yield database_1.getPlayers(config));
+        }));
+    }));
+    app.get('/teams', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        yield exports.safeRoute(req, res, () => __awaiter(this, void 0, void 0, function* () {
+            res.send(yield database_1.getTeams(config));
         }));
     }));
     app.post('/players', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -491,6 +504,11 @@ exports.addPlayer = (config, player) => __awaiter(this, void 0, void 0, function
     if (existingPlayer) {
         throw new error_1.ApiError({ code: 'VALIDATION', field: 'name', message: 'Player already exists' });
     }
+    const teams = yield exports.getTeams(config);
+    const team = _.find(teams, { id: player.teamId });
+    if (!team) {
+        throw new error_1.ApiError({ code: 'VALIDATION', field: 'teamId', message: 'Team does not exist' });
+    }
     // add new player
     const response = yield q.nfcall(sheets.spreadsheets.values.append, {
         auth: client,
@@ -500,13 +518,14 @@ exports.addPlayer = (config, player) => __awaiter(this, void 0, void 0, function
         insertDataOption: 'INSERT_ROWS',
         resource: {
             values: [
-                [player.name],
+                [player.name, team.name],
             ],
         },
     });
     return {
         id: /!A(\d+)/.exec(response.data.updates.updatedRange)[1],
         name: player.name,
+        teamId: team.id
     };
 });
 exports.getPlayers = (config) => __awaiter(this, void 0, void 0, function* () {
@@ -515,11 +534,13 @@ exports.getPlayers = (config) => __awaiter(this, void 0, void 0, function* () {
     const response = yield q.nfcall(sheets.spreadsheets.values.get, {
         auth: client,
         spreadsheetId: config.database.spreadsheetId,
-        range: `Players!A1:F100000`,
+        range: `Players!A1:B100000`,
     });
+    const teams = _.keyBy(yield exports.getTeams(config), 'name');
     return response.data.values.slice(1).map((row, i) => ({
         id: i.toString(),
         name: row[0],
+        teamId: teams[row[1]] ? teams[row[1]].id : null,
     }));
 });
 exports.getGames = (config) => __awaiter(this, void 0, void 0, function* () {
@@ -529,6 +550,19 @@ exports.getGames = (config) => __awaiter(this, void 0, void 0, function* () {
         auth: client,
         spreadsheetId: config.database.spreadsheetId,
         range: `Games!A1:F100000`,
+    });
+    return response.data.values.slice(1).map((row, i) => ({
+        id: i.toString(),
+        name: row[0],
+    }));
+});
+exports.getTeams = (config) => __awaiter(this, void 0, void 0, function* () {
+    const client = yield getGAPIClient();
+    const sheets = google.sheets('v4');
+    const response = yield q.nfcall(sheets.spreadsheets.values.get, {
+        auth: client,
+        spreadsheetId: config.database.spreadsheetId,
+        range: `Teams!A1:B100000`,
     });
     return response.data.values.slice(1).map((row, i) => ({
         id: i.toString(),
@@ -629,6 +663,9 @@ exports.validateAddPlayerBody = (body) => {
     }
     if (!body.name || !body.name.trim()) {
         throw new error_1.ApiError({ code: 'VALIDATION', field: 'name', message: 'Missing name' });
+    }
+    if (!body.teamId || !_.isString(body.teamId)) {
+        throw new error_1.ApiError({ code: 'VALIDATION', field: 'teamId', message: 'Invalid string' });
     }
 };
 

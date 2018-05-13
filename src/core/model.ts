@@ -18,5 +18,11 @@ export interface Score {
 
 export interface Player {
   id: Id
+  teamId: Id
+  name: string
+}
+
+export interface Team {
+  id: Id
   name: string
 }

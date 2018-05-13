@@ -33,4 +33,7 @@ export const validateAddPlayerBody = (body: any) => {
   if (!body.name || !body.name.trim()) {
     throw new ApiError({ code: 'VALIDATION', field: 'name', message: 'Missing name' })
   }
+  if (!body.teamId || !_.isString(body.teamId)) {
+    throw new ApiError({ code: 'VALIDATION', field: 'teamId', message: 'Invalid string' })
+  }
 }

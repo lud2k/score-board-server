@@ -44,6 +44,14 @@ export const getGames = async (config: Config): Promise<Game[]> => {
   throw new Error(`Unknow database type: ${type}`)
 }
 
+export const getTeams = async (config: Config): Promise<Game[]> => {
+  const type = config.database.type
+  if (type === 'google-sheets') {
+    return GoogleSheets.getTeams(config)
+  }
+  throw new Error(`Unknow database type: ${type}`)
+}
+
 export const addPlayer = async (config: Config, player: AddPlayer): Promise<Player> => {
   const type = config.database.type
   if (type === 'google-sheets') {
